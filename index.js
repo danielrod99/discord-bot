@@ -7,15 +7,15 @@ const client = new Discord.Client();
 const queue = new Map();
 
 client.once("ready", () => {
-  console.log("Ready!");
+  console.log("Homunculbot conectado!");
 });
 
 client.once("reconnecting", () => {
-  console.log("Reconnecting!");
+  console.log("Reconectando!");
 });
 
 client.once("disconnect", () => {
-  console.log("Disconnect!");
+  console.log("Homunculbot Desconectado!");
 });
 
 client.on("message", async message => {
@@ -25,7 +25,12 @@ client.on("message", async message => {
   const serverQueue = queue.get(message.guild.id);
 
   if (message.content.startsWith(`${prefix}play`)) {
-    execute(message, serverQueue);
+      var searchData=message.content.split(" ");
+      if(searchData.length==2){
+          execute(message, serverQueue);
+      }else{
+          message.channel.send('Homunculbot todavia no puede realizar busquedas, ingresa directamente el URL');
+      }
     return;
   } else if (message.content.startsWith(`${prefix}skip`)) {
     skip(message, serverQueue);
@@ -33,8 +38,11 @@ client.on("message", async message => {
   } else if (message.content.startsWith(`${prefix}stop`)) {
     stop(message, serverQueue);
     return;
-  } else {
-    message.channel.send("You need to enter a valid command!");
+  }else if(message.content.startsWith(`${prefix}hola`)) {
+    message.channel.send("Hola Holason");
+  }
+  else {
+    message.channel.send("No existe ese comando!");
   }
 });
 
@@ -44,19 +52,19 @@ async function execute(message, serverQueue) {
   const voiceChannel = message.member.voice.channel;
   if (!voiceChannel)
     return message.channel.send(
-      "You need to be in a voice channel to play music!"
+      "Tienes que estar en un canal de voz para poder reproducir musica"
     );
   const permissions = voiceChannel.permissionsFor(message.client.user);
   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
     return message.channel.send(
-      "I need the permissions to join and speak in your voice channel!"
+      "Homunculbot no tiene los permisos necesarios para conectarse"
     );
   }
 
   const songInfo = await ytdl.getInfo(args[1]);
   const song = {
-    title: songInfo.title,
-    url: songInfo.video_url
+    title: songInfo.videoDetails.title,
+    url: songInfo.videoDetails.video_url
   };
 
   if (!serverQueue) {
@@ -84,24 +92,24 @@ async function execute(message, serverQueue) {
     }
   } else {
     serverQueue.songs.push(song);
-    return message.channel.send(`${song.title} has been added to the queue!`);
+    return message.channel.send(`**${song.title}** se agrego al queue!`);
   }
 }
 
 function skip(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "You have to be in a voice channel to stop the music!"
+        "Tienes que estar en un canal de voz para poder reproducir musica"
     );
   if (!serverQueue)
-    return message.channel.send("There is no song that I could skip!");
+    return message.channel.send("No hay mas canciones para hacer skip");
   serverQueue.connection.dispatcher.end();
 }
 
 function stop(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-      "You have to be in a voice channel to stop the music!"
+      "Tienes que estar en un canal de voz para poder reproducir musica"
     );
   serverQueue.songs = [];
   serverQueue.connection.dispatcher.end();
@@ -121,9 +129,9 @@ function play(guild, song) {
       serverQueue.songs.shift();
       play(guild, serverQueue.songs[0]);
     })
-    .on("error", error => console.error(error));
+    .on("error", error => {console.error(error)});
   dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-  serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+  serverQueue.textChannel.send(`Reproduciendo: **${song.title}**`);
 }
 
 client.login(token);

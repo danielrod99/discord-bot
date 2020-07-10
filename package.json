@@ -1,0 +1,25 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "bot para uso de los homunculos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "discord-bot"
+  ],
+  "author": "Daniel-Rodriguez",
+  "license": "ISC",
+  "dependencies": {
+    "bufferutil": "^4.0.1",
+    "discord.js": "^12.2.0",
+    "ffmpeg": "0.0.4",
+    "ffmpeg-static": "^4.2.5",
+    "fluent-ffmpeg": "^2.1.2",
+    "opusscript": "0.0.7",
+    "utf-8-validate": "^5.0.2",
+    "ytdl-core": "^3.1.2"
+  }
+}

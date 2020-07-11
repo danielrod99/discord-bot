@@ -40,6 +40,17 @@ client.on("message", async message => {
     return;
   }else if(message.content.startsWith(`${prefix}hola`)) {
     message.channel.send("Hola Holason");
+  }else if(message.content.startsWith(`${prefix}manco`)){
+    message.channel.send("Luisillo Luisoson es MANCO");
+  }else if(message.content.startsWith(`${prefix}help`)){
+    message.channel.send(`
+      Homunculbot tiene estos comandos disponibles actualmente:
+      - ${prefix}hola   / Saludar al grupo
+      - ${prefix}manco  / Menciona la manco del grupo
+      - ${prefix}play <link de YT> / Reproduce la cancion del link en el chat de voz
+      - ${prefix}skip   / Se salta la cancion actual
+      - ${prefix}stop   / Termina el chat de voz
+    `);
   }
   else {
     message.channel.send("No existe ese comando!");

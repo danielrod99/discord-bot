@@ -1,5 +1,5 @@
 const Discord = require("discord.js");
-const { prefix, token,key } = require("./config/config.json");
+const { prefix, token, key } = require("./config/config.json");
 const ytdl = require("ytdl-core");
 
 const client = new Discord.Client();
@@ -25,12 +25,45 @@ client.on("message", async message => {
   const serverQueue = queue.get(message.guild.id);
 
   if (message.content.startsWith(`${prefix}play`)) {
-      var searchData=message.content.split(" ");
-      if(searchData.length==2){
-          execute(message, serverQueue);
-      }else{
-          message.channel.send('Homunculbot todavia no puede realizar busquedas, ingresa directamente el URL');
+    var searchData = message.content.split(" ");
+    var request = require('request');
+    var position=0;
+    searchData.shift();
+    if(searchData[0].indexOf('https://')!=-1){
+      execute(message,serverQueue,null);
+    }else{
+      if(typeof(searchData[searchData.length-1])=='number'){
+        position=searchData[searchData.length-1];
+        searchData.pop();
       }
+      var searchQuery='';
+      searchData.forEach((item,index)=>{
+        if(index==0){
+          searchQuery+=item;
+        }else{
+          searchQuery+='%20';
+          searchQuery+=item;
+        }
+      })
+      var options = {
+        'method': 'GET',
+        'url': `https://www.googleapis.com/youtube/v3/search?part=id&q=${searchQuery}&key=${key}`,
+        'headers': {
+          'Accept': 'application/json'
+        }
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        var body=JSON.parse(response.body);
+        console.log(body);
+        if(body.items){
+          var videoId=body.items[position].id.videoId;
+          execute(message, serverQueue,videoId);
+        }else{
+          message.channel.send("Error en obtener datos");
+        }
+      });
+    }
     return;
   } else if (message.content.startsWith(`${prefix}skip`)) {
     skip(message, serverQueue);
@@ -38,11 +71,11 @@ client.on("message", async message => {
   } else if (message.content.startsWith(`${prefix}stop`)) {
     stop(message, serverQueue);
     return;
-  }else if(message.content.startsWith(`${prefix}hola`)) {
+  } else if (message.content.startsWith(`${prefix}hola`)) {
     message.channel.send("Hola Holason");
-  }else if(message.content.startsWith(`${prefix}manco`)){
+  } else if (message.content.startsWith(`${prefix}manco`)) {
     message.channel.send("Luisillo Luisoson es MANCO");
-  }else if(message.content.startsWith(`${prefix}help`)){
+  } else if (message.content.startsWith(`${prefix}help`)) {
     message.channel.send(`
       Homunculbot tiene estos comandos disponibles actualmente:
       - ${prefix}hola   / Saludar al grupo
@@ -57,7 +90,7 @@ client.on("message", async message => {
   }
 });
 
-async function execute(message, serverQueue) {
+async function execute(message, serverQueue,videoId) {
   const args = message.content.split(" ");
 
   const voiceChannel = message.member.voice.channel;
@@ -71,9 +104,13 @@ async function execute(message, serverQueue) {
       "Homunculbot no tiene los permisos necesarios para conectarse"
     );
   }
-
-  const songInfo = await ytdl.getInfo(args[1]);
-  const song = {
+  var songInfo; 
+  if(videoId){
+    songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+  }else{
+    songInfo = await ytdl.getInfo(args[1]);
+  }
+  var song = {
     title: songInfo.videoDetails.title,
     url: songInfo.videoDetails.video_url
   };
@@ -110,7 +147,7 @@ async function execute(message, serverQueue) {
 function skip(message, serverQueue) {
   if (!message.member.voice.channel)
     return message.channel.send(
-        "Tienes que estar en un canal de voz para poder reproducir musica"
+      "Tienes que estar en un canal de voz para poder reproducir musica"
     );
   if (!serverQueue)
     return message.channel.send("No hay mas canciones para hacer skip");
@@ -140,7 +177,7 @@ function play(guild, song) {
       serverQueue.songs.shift();
       play(guild, serverQueue.songs[0]);
     })
-    .on("error", error => {console.error(error)});
+    .on("error", error => { console.error(error) });
   dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
   serverQueue.textChannel.send(`Reproduciendo: **${song.title}**`);
 }

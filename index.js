@@ -1,6 +1,7 @@
 const Discord = require("discord.js");
 const { prefix, token, key } = require("./config/config.json");
 const ytdl = require("ytdl-core");
+var request=require('request');
 
 const client = new Discord.Client();
 

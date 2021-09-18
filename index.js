@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const { prefix, token, key } = require("./config/config.json");
 const ytdl = require("ytdl-core");
-var request=require('request');
+const puppeteer = require('puppeteer');
 
 const client = new Discord.Client();
 
@@ -27,43 +27,15 @@ client.on("message", async message => {
 
   if (message.content.startsWith(`${prefix}play`)) {
     var searchData = message.content.split(" ");
-    var request = require('request');
-    var position=0;
     searchData.shift();
-    if(searchData[0].indexOf('https://')!=-1){
-      execute(message,serverQueue,null);
-    }else{
-      if(typeof(searchData[searchData.length-1])=='number'){
-        position=searchData[searchData.length-1];
-        searchData.pop();
-      }
-      var searchQuery='';
-      searchData.forEach((item,index)=>{
-        if(index==0){
-          searchQuery+=item;
-        }else{
-          searchQuery+='%20';
-          searchQuery+=item;
-        }
-      })
-      var options = {
-        'method': 'GET',
-        'url': `https://www.googleapis.com/youtube/v3/search?part=id&q=${searchQuery}&key=${key}`,
-        'headers': {
-          'Accept': 'application/json'
-        }
-      };
-      request(options, function (error, response) {
-        if (error) throw new Error(error);
-        var body=JSON.parse(response.body);
-        console.log(body);
-        if(body.items){
-          var videoId=body.items[position].id.videoId;
-          execute(message, serverQueue,videoId);
-        }else{
-          message.channel.send("Error en obtener datos");
-        }
-      });
+    if (searchData[0].indexOf('https://') != -1) { // YT link given to bot
+      execute(message, serverQueue, null);
+    } else { // Search in youtube
+      let url = await navigateAndGetLink(message.content.substring(message.content.indexOf(' '), message.content.length));
+      id = url.href;
+      console.log(url, id)
+      id = id.substring(id.lastIndexOf('?v=') + 3, id.length);
+      execute(message, serverQueue, id);
     }
     return;
   } else if (message.content.startsWith(`${prefix}skip`)) {
@@ -80,7 +52,7 @@ client.on("message", async message => {
     message.channel.send(`
       Homunculbot tiene estos comandos disponibles actualmente:
       - ${prefix}hola   / Saludar al grupo
-      - ${prefix}manco  / Menciona la manco del grupo
+      - ${prefix}manco  / Menciona al manco del grupo
       - ${prefix}play <link de YT> / Reproduce la cancion del link en el chat de voz
       - ${prefix}skip   / Se salta la cancion actual
       - ${prefix}stop   / Termina el chat de voz
@@ -91,7 +63,7 @@ client.on("message", async message => {
   }
 });
 
-async function execute(message, serverQueue,videoId) {
+async function execute(message, serverQueue, videoId) {
   const args = message.content.split(" ");
 
   const voiceChannel = message.member.voice.channel;
@@ -105,10 +77,10 @@ async function execute(message, serverQueue,videoId) {
       "Homunculbot no tiene los permisos necesarios para conectarse"
     );
   }
-  var songInfo; 
-  if(videoId){
+  var songInfo;
+  if (videoId) {
     songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
-  }else{
+  } else {
     songInfo = await ytdl.getInfo(args[1]);
   }
   var song = {
@@ -184,3 +156,19 @@ function play(guild, song) {
 }
 
 client.login(token);
+
+async function navigateAndGetLink(searchQuery) {
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto('https://youtube.com');
+  await page.click('input#search');
+  await page.keyboard.type(searchQuery);
+  await page.click('button#search-icon-legacy');
+  await page.waitForSelector('ytd-video-renderer');
+  await page.mouse.click(120, 220);
+  var link = await page.evaluate(() => {
+    return window.location;
+  })
+  await browser.close();
+  return link;
+}

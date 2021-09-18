@@ -14,6 +14,6 @@ Basic bot for discord for joining the voice channel and reproduce music from a y
     "key": "<your-public-key>"  //  Public key obtained from the discord bot dashboard
 }
 ```
-5. Invite your bot to your server using the link _https://discord.com/oauth2/authorize?client_id=<YOUR-BOT-ID>&permissions=1133584&scope=bot_
+5. Invite your bot to your server using the link _https://discord.com/oauth2/authorize?client_id=*YOUR-BOT-ID*&permissions=1133584&scope=bot_
 6. Run the bot and try it!
 
